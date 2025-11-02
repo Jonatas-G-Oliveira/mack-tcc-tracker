@@ -1,7 +1,7 @@
 import requests
 import time
 
-ESP32_IP = "http://192.168.15.88:8080"
+ESP32_IP = ""
 
 def mover_servos(x, y):
     
