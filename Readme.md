@@ -54,3 +54,8 @@ trackervenv\Scripts\activate
 
 # Linux / macOS
 # source trackervenv/bin/activate
+
+### 3 Configurar o ambiente Python
+Para testar apenas os servos rodar o código <teste servos>
+Para testar a detecção rodar o arquivos deteccao.py
+
