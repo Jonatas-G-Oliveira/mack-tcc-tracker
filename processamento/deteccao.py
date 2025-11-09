@@ -5,7 +5,7 @@ import requests
 from ultralytics import YOLO #<----- pip install --quiet ultralytics
 #pip install torch-directml
 
-ESP32_IP = "http://192.168.15.88:8080"
+ESP32_IP = ""
 
 def mover_servos(x, y):
     
@@ -22,66 +22,83 @@ def mover_servos(x, y):
             print(f"Erro {resposta.status_code} ao enviar o comando")
     except requests.exceptions.RequestException as e:
         print(f'Falha na comunicação: {e}')
-
+ 
 
 def main():
+  quadroCentro = 70
   mover_servos(90,90)
   print('Começando')
-  print("CUDA disponível:", torch.cuda.is_available())
-  print("Versão do PyTorch:", torch.__version__)
+ 
   # ----- Definindo modelo
   modelo = YOLO('yolov8n.pt')
-  if(torch.cuda.is_available()):
-    print("Nome da GPU:", torch.cuda.get_device_name(0))
-    modelo.to('cuda')
 
   # ----- Definições
   captura = cv2.VideoCapture("http://192.168.15.88:81/stream") #<------ Só trocar aqui para camera do ESP-32
-  saida = './result.mp4'
 
-  # ----- Escrita do arquivo
-  fps = captura.get(cv2.CAP_PROP_FPS)
-  largura = int(captura.get(cv2.CAP_PROP_FRAME_WIDTH))
-  altura = int(captura.get(cv2.CAP_PROP_FRAME_HEIGHT))
-  saida = cv2.VideoWriter(saida, cv2.VideoWriter_fourcc(*'mp4v'), fps, (largura, altura))
-
-  print('-> Abrindo video')
   if not captura.isOpened():
     print('Erro ao abrir o arquivo de video')
 
+  cv2.namedWindow('Resultado', cv2.WINDOW_NORMAL)
+  cv2.namedWindow('Resultado', cv2.WINDOW_NORMAL)
+  cv2.resizeWindow('Resultado', 1280, 720)
+  positionX = 90
+  positionY = 90
+     
+  quadroCentro = 90
+  mover_servos(positionX,positionY)
+
   while True:
       ret, frame = captura.read()
+      frameShow = frame.copy()
+
       if not ret:
         break
 
-      altura, largura = frame.shape[:2]
-      centro_x, centro_y = largura/2, altura/2
-
-
-      print(f'Tela: {centro_y} - {centro_x}')
+      altura, largura, _ = frame.shape
    
+      cv2.line(frameShow, (0, int(altura / 2)), (largura, int(altura / 2)), (0, 255, 0), 2)
+      cv2.line(frameShow, (int(largura / 2), 0), (int(largura / 2), altura), (0, 255, 0), 2)
+
       # ----- Aplicando o modelo para a classe person  
       resultados = modelo(frame, classes=[0], conf=0.6, stream =False)
       for caixas in resultados[0].boxes:
         x1, y1, x2, y2 = caixas.xyxy[0] #Quatro pontos da caixa
         conf = caixas.conf[0]
-      
-        #centro da pessoa
-        x_pessoa = (x1 + x2)/2
-        y_pessoa = (y1 + y2)/2
+        centro_x = int(largura / 2)
+        centro_y = int(altura / 2)
+        centro_pessoa_horizontal = int((x1+x2)/2) + 10
+        centro_pessoa_vertical = int((y1+y2)/2) + 10
+        cv2.circle(frameShow, (centro_pessoa_horizontal, centro_pessoa_vertical),5,(0,255,0),-1)
+        # cv2.rectangle(frameShow,(x1,y1),(x2,y2),(255,0,255),5) 
+        cv2.rectangle(frameShow, (centro_x -70, centro_y-70),(centro_x + 70, centro_y + 70), (255, 0, 255), 5)
 
-        #Distancia dos pixels até o centro da tela
-        dx = centro_x - x_pessoa
-        dy = y_pessoa - centro_y
+        #Movimento Eixo X
+   
+        if centro_pessoa_horizontal < (centro_x - quadroCentro):
+            positionX += 1
+            mover_servos(positionX, positionY)
+        elif centro_pessoa_horizontal > (centro_x + quadroCentro):
+            positionX -= 1
+            mover_servos(positionX, positionY)
+              
+        
+        #Movimento Eixo Y
+        
+        if centro_pessoa_vertical > (centro_y + quadroCentro):
+           positionY += 1
+           if positionX <= 180 and positionX >= 1:
+              mover_servos(positionX, positionY)
+        elif centro_pessoa_vertical < (centro_y - quadroCentro):
+            positionY -= 1
+            if positionX <= 180 and positionX >= 1:
+               mover_servos(positionX, positionY)
 
-        servo_x = 90 + dx * 0.2  # 90 é centro servo, fator ajusta pixels -> graus
-        servo_y = 90 + dy * 0.2
-        mover_servos(int(servo_x), int(servo_y))
-        print(f'Ponto central da pessoa X: ({x_pessoa:.1f}, Y: ({y_pessoa:.1f})')
-        print(f'Deslocamento do centro da tela X: ({dx:.1f}, Y:({dy:.1f})')
-        time.sleep(0.1)
       frame_anotado = resultados[0].plot()
-      cv2.imshow('Resultado', frame_anotado)
+      alpha = 0.6  # transparência — ajuste entre 0 e 1
+      frame_final = cv2.addWeighted(frameShow, 1 - alpha, frame_anotado, alpha, 0)
+      # cv2.imshow('Resultado', frame_anotado)
+      cv2.imshow('Resultado', frame_final)
+      
       # saida.write(frame_anotado)
 
       # ----- Encerra o programa ao apertar a tecla q
@@ -90,7 +107,6 @@ def main():
 
   # ----- Limpa Memória
   captura.release()
-  saida.release()
 
 
 main()
