@@ -35,7 +35,7 @@ Caso encontre alguma pessoa, ele retorna um URL contendo os valores X e Y com a 
 
 Confira o vídeo de demonstração do projeto no link abaixo:
 
-👉 [Assista ao vídeo](https://www.youtube.com/seu-video-aqui)
+👉 [Assista ao vídeo](https://youtu.be/ywhzCMkgt-4)
 
 ## ⚙️ Como rodar
 
@@ -58,5 +58,6 @@ trackervenv\Scripts\activate
 ### 3 Configurar o ambiente Python
 Para testar apenas os servos rodar o código <teste servos>
 Para testar a detecção rodar o arquivos deteccao.py
+
 
 
