@@ -6,7 +6,7 @@ Este projeto tem o objetivo de unir o dispositivo ESP32-CAM com o algoritmo YOLO
 
 ## 📝 Resumo
 
-A captura da imagem é feita pelo IoT, que funciona como um servidor.  
+A captura e transmissão da imagem é feita pelo ESP-32 CAM, que funciona como um servidor e controlador dos servomotores.  
 O computador acessa o stream de vídeo disponível em `{ip}/stream` e processa a cena utilizando o modelo **YOLOv8n**.  
 Caso encontre alguma pessoa, ele retorna um URL contendo os valores X e Y com a localização do objeto, permitindo que o ESP32 mova os servos para centralizar o objeto focal.
 
@@ -58,4 +58,5 @@ trackervenv\Scripts\activate
 ### 3 Configurar o ambiente Python
 Para testar apenas os servos rodar o código <teste servos>
 Para testar a detecção rodar o arquivos deteccao.py
+
 
